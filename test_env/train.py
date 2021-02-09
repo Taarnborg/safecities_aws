@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     # Data and model checkpoints directories
     parser.add_argument(
-        "--model_checkpoint", type=str, default='Maltehb/-l-ctra-danish-electra-small-uncased', help="name of pretrained model from huggingface model hub"
+        "--model_checkpoint", type=str, default='KB/bert-base-swedish-cased', help="name of pretrained model from huggingface model hub"
     )
     parser.add_argument(
         "--num_labels", type=int, default=2, metavar="N", help="Number of labels."

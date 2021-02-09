@@ -6,7 +6,8 @@ import csv
 from io import StringIO
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained("Maltehb/-l-ctra-danish-electra-small-uncased", use_fast=True)
+# tokenizer = AutoTokenizer.from_pretrained("Maltehb/-l-ctra-danish-electra-small-uncased", use_fast=True)
+tokenizer = AutoTokenizer.from_pretrained("KB/bert-base-swedish-cased", use_fast=True)
 
 JSON_CONTENT_TYPE = 'application/json'
 
