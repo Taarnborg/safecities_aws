@@ -120,7 +120,7 @@ if __name__ == "__main__":
         "--test-batch-size", type=int, default=8, metavar="N", help="input batch size for testing (default: 8)"
     )
     parser.add_argument("--epochs", type=int, default=10, metavar="N", help="number of epochs to train (default: 2)")
-    parser.add_argument("--lr", type=float, default=2e-5, metavar="LR", help="learning rate (default: 0.3e-5)")
+    parser.add_argument("--lr", type=float, default=1e-4, metavar="LR", help="learning rate (default: 0.3e-5)")
     parser.add_argument("--weight_decay", type=float, default=0.01, metavar="M", help="weight_decay (default: 0.01)")
     parser.add_argument("--seed", type=int, default=43, metavar="S", help="random seed (default: 43)")
     parser.add_argument("--epsilon", type=int, default=1e-8, metavar="EP", help="random seed (default: 1e-8)")
