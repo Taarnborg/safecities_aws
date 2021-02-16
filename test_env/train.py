@@ -1,19 +1,24 @@
 import argparse
 import logging
 import os
+
 import numpy as np
 import torch
 from transformers import AutoTokenizer,AutoModelForSequenceClassification
 from transformers import TrainingArguments, Trainer
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score,classification_report
+
 from datasets import load_dataset, load_metric
 
 def get_model(model_checkpoint, num_labels):
     model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=num_labels)
     return(model)
     
+    
 def get_tokenizer(model_checkpoint):
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, use_fast=True)
     return(tokenizer)
+
 
 def get_encoded_data(data_loader_script, tokenizer):
     dataset = load_dataset(data_loader_script)
@@ -24,10 +29,11 @@ def get_encoded_data(data_loader_script, tokenizer):
 
     return(encoded_dataset)
 
+
 def train(args):
     use_cuda = args.num_gpus > 0
     device = torch.device("cuda" if use_cuda else "cpu")
-
+    
     torch.manual_seed(args.seed)
     if use_cuda:
         torch.cuda.manual_seed(args.seed)
@@ -44,11 +50,11 @@ def train(args):
     train_args = TrainingArguments(
         "test-glue",
         evaluation_strategy = "epoch",
-        learning_rate=1e-4,
+        learning_rate=args.lr,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.test_batch_size,
         num_train_epochs=1,
-        weight_decay=0.01,
+        weight_decay=args.weight_decay,
         load_best_model_at_end=True,
         metric_for_best_model=metric_name,
     )
@@ -69,15 +75,32 @@ def train(args):
 
     trainer.train()
 
-    print(trainer.predict(encoded_dataset['test']).metrics)
+    p = trainer.predict(encoded_dataset['validation'])
+
+
+    predicted_classes = np.argmax(p.predictions, axis=1)
+    target_classes = p.label_ids
+    
+    print("confusion matrix: ", confusion_matrix(target_classes, predicted_classes))
+
+    print('F1 score: ', f1_score(target_classes, predicted_classes))
+
+    print('Precision score: ', precision_score(target_classes, predicted_classes))
+    print('Recall score: ', recall_score(target_classes, predicted_classes))
+    print('Loss: ', p.metrics['eval_loss'])
+
+    print('Classification report')
+    print(classification_report(target_classes, predicted_classes))
+
+    #print(trainer.predict(encoded_dataset['test']).metrics)
+
+    print(p.metrics)
 
     print('started saving')
 
     trainer.save_model(args.model_dir)
 
     print('done saving')
-
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
