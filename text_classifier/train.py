@@ -109,7 +109,7 @@ def train(args):
 
             outputs = model(b_input_ids,attention_mask=b_input_mask)
 
-            loss = loss_fn(outputs.logits, b_labels)
+            loss = loss_fn(outputs, b_labels)
 
             loss.backward()
             #torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0) ?????
