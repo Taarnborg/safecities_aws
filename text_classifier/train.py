@@ -26,7 +26,7 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 MAX_LEN = 512
-PRE_TRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased
+PRE_TRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
 
 tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_MODEL_NAME, use_fast=True)
 
