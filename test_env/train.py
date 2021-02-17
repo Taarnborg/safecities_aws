@@ -80,7 +80,7 @@ def train(args):
 
     predicted_classes = np.argmax(p.predictions, axis=1)
     target_classes = p.label_ids
-    
+    print()
     print("confusion matrix: ", confusion_matrix(target_classes, predicted_classes))
 
     print('F1 score: ', f1_score(target_classes, predicted_classes))
