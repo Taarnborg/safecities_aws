@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 
-PRE_TRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased
+PRE_TRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
 class KimCNN(nn.Module):
     
     def __init__(self, embed_num, embed_dim, class_num, kernel_num, kernel_sizes, dropout, static):
