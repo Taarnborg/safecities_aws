@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 
-PRE_TRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
+PRETRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
 class KimCNN(nn.Module):
     
     def __init__(self, embed_num, embed_dim, class_num, kernel_num, kernel_sizes, dropout, static):
@@ -38,7 +38,7 @@ class KimCNN(nn.Module):
 class TestClassifier(nn.Module):
     def __init__(self, n_classes):
         super(TestClassifier, self).__init__()
-        self.bert = BertModel.from_pretrained(PRE_TRAINED_MODEL_NAME)
+        self.bert = BertModel.from_pretrained(PRETRAINED_MODEL_NAME)
 
         self.classifier = nn.Sequential(nn.Dropout(p=0.2),
                                         nn.Linear(self.bert.config.hidden_size, n_classes),
@@ -50,3 +50,13 @@ class TestClassifier(nn.Module):
           attention_mask=attention_mask
         )
         return self.classifier(output.pooler_output)
+
+
+
+
+# nn.Sequential(
+#     nn.Conv2d(1,3,(2,768)),
+#     nn.Conv2d(1,3,(3,768)),
+#     nn.Conv2d(1,3,(4,768)),
+# )
+
