@@ -54,9 +54,16 @@ class TestClassifier(nn.Module):
 
 
 
-# nn.Sequential(
-#     nn.Conv2d(1,3,(2,768)),
-#     nn.Conv2d(1,3,(3,768)),
-#     nn.Conv2d(1,3,(4,768)),
-# )
+# MAX_LEN = 512
+# HIDDEN_SIZE = 768
+# N_KERNELS = 3
+# KERENL_SIZES = [2,3,4]
+# DROPOUT = 0.2
+# N_CLASSES = 2
+
+# embed = nn.Embedding(MAX_LEN, HIDDEN_SIZE)
+# convs1 = nn.ModuleList([nn.Conv2d(1, N_KERNELS, (KS, HIDDEN_SIZE)) for KS in KERENL_SIZES])
+# dropout = nn.Dropout(DROPOUT)
+# fc1 = nn.Linear(len(KERENL_SIZES) * N_KERNELS, N_CLASSES)
+# sigmoid = nn.Sigmoid()
 
