@@ -143,7 +143,7 @@ def test(model, eval_loader, device):
             b_labels = batch['targets'].to(device)
 
             outputs = model(b_input_ids,attention_mask=b_input_mask)
-            _, preds = torch.max(outputs.logits, dim=1)
+            _, preds = torch.max(outputs, dim=1)
 
 
             predicted_classes = torch.cat((predicted_classes, preds))
