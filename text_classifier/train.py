@@ -21,7 +21,7 @@ from model_def import TestClassifier
 from utils import remove_invalid_inputs
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 TRAIN = 'hateful_70.csv'
@@ -29,7 +29,6 @@ VALID = 'hateful_10.csv'
 TRAIN = 'hateful_20.csv'
 WEIGHTS_NAME = "pytorch_model.bin" # this comes from transformers.file_utils
 MAX_LEN = 512
-SAMPLE_FRAC = .1
 PRETRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
 
 tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_MODEL_NAME, use_fast=True)
@@ -37,8 +36,6 @@ tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_MODEL_NAME, use_fast=True)
 def _get_train_data_loader(batch_size, data_dir):
     dataset = pd.read_csv(os.path.join(args.data_dir, TRAIN), sep='\t', names = ['targets', 'text'])
     dataset = remove_invalid_inputs(dataset,'text')
-    if args.use_sample:
-        dataset = dataset.sample(frac=SAMPLE_FRAC)
 
     train_data = CustomDataset(
                     text=dataset.text.to_numpy(),
@@ -72,11 +69,6 @@ def save_model(model_to_save,save_directory):
 
     state_dict = model_to_save.state_dict()
     torch.save(state_dict, output_model_file)
-
-
-# def get_model(model_checkpoint, num_labels):
-#     model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=num_labels)
-#     return(model)
 
 def freeze(model, frozen_layers):
     modules = [model.bert.encoder.layer[:frozen_layers]] 
@@ -209,9 +201,6 @@ if __name__ == "__main__":
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     parser.add_argument("--num-cpus", type=int, default=os.environ["SM_NUM_CPUS"])
     # parser.add_argument("--num-gpus", type=int, default=False)
-
-
-    parser.add_argument('--use_sample', type=int,default=0)
 
     args = parser.parse_args()
     
