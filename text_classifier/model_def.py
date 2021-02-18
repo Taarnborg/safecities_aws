@@ -1,4 +1,4 @@
-from transformers import BertModel, BertTokenizer, AdamW, get_linear_schedule_with_warmup
+from transformers import BertModel, BertTokenizer, AdamW, get_linear_schedule_with_warmup,SequenceClassifierOutput
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -56,10 +56,9 @@ class TestClassifier(nn.Module):
           input_ids=input_ids,
           attention_mask=attention_mask
         )
-        
         logits = self.classifier(outputs.pooler_output)
-        # output = (logits,) + outputs[2:]
         return logits
+
 
 
 class CNNClassifier(nn.Module):
@@ -101,3 +100,14 @@ class CNNClassifier(nn.Module):
           attention_mask=attention_mask
         )
         return self.classifier(pooled_output)
+
+classifier = nn.Sequential(
+    nn.Dropout(p=0.1),
+    nn.Linear(self.bert.config.hidden_size, 32),
+    nn.Dropout(p=0.1),
+    nn.ReLU(),
+    nn.Linear(32, 48),
+    nn.Dropout(p=0.1),
+    nn.ReLU(),
+    nn.Linear(48, n_classes),
+    )

@@ -15,7 +15,7 @@ from torch.utils.data import RandomSampler, DataLoader
 
 # Network definition
 from data_prep import CustomDataset
-from model_def import TestClassifier
+from model_def import classifier
 
 # Utils
 from utils import remove_invalid_inputs,BertEncoderFilter
@@ -86,7 +86,9 @@ def train(args):
     print(device)
 
     train_loader = _get_train_data_loader(args.batch_size, args.data_dir)
-    model = TestClassifier(args.num_labels)
+    model = AutoModelForSequenceClassification.from_pretrained(PRETRAINED_MODEL_NAME, num_labels=num_labels)
+    model.classifer = classifier
+    # model = TestClassifier(args.num_labels)
     freeze(model, args.frozen_layers)
     
     torch.manual_seed(args.seed)
