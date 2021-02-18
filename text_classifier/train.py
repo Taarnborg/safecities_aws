@@ -21,7 +21,7 @@ from model_def import TestClassifier
 from utils import remove_invalid_inputs
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 TRAIN = 'hateful_70.csv'
@@ -69,6 +69,7 @@ def save_model(model_to_save,save_directory):
 
     state_dict = model_to_save.state_dict()
     torch.save(state_dict, output_model_file)
+
 
 def freeze(model, frozen_layers):
     modules = [model.bert.encoder.layer[:frozen_layers]] 
