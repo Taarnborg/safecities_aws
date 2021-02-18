@@ -23,8 +23,8 @@ from utils import remove_invalid_inputs,BertEncoderFilter
 f = BertEncoderFilter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-logger.addFilter(f)
 logger.addHandler(logging.StreamHandler(sys.stdout))
+logger.addFilter(f)
 
 TRAIN = 'hateful_70.csv'
 VALID = 'hateful_10.csv'

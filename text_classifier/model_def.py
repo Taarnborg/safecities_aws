@@ -52,12 +52,12 @@ class TestClassifier(nn.Module):
             )
         
     def forward(self, input_ids, attention_mask):
-        output = self.bert(
+        outputs = self.bert(
           input_ids=input_ids,
           attention_mask=attention_mask
         )
         
-        logits = self.classifier(output.pooler_output)
+        logits = self.classifier(outputs.pooler_output)
         output = (logits,) + outputs[2:]
         return output
 
