@@ -214,8 +214,8 @@ if __name__ == "__main__":
     # parser.add_argument("--num-gpus", type=int, default=False)
 
 
-    parser.add_argument('--use_sample', dest='use_sample', action='store_true')
+    parser.add_argument('--use_sample', type=int,default=0)
 
     args = parser.parse_args()
-
+    
     train(args)
