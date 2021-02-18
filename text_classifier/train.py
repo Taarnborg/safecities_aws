@@ -66,16 +66,12 @@ def _get_eval_data_loader(batch_size, data_dir):
     return(train_dataloader)
 
 def save_model(save_directory,output_model_file):
-
-    os.makedirs(save_directory, exist_ok=True)
     output_model_file = os.path.join(save_directory, WEIGHTS_NAME)
-
     if args.num_gpus > 1:
         model_to_save = model_to_save.module
 
     state_dict = model_to_save.state_dict()
     torch.save(state_dict, output_model_file)
-
 
 # def get_model(model_checkpoint, num_labels):
 #     model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=num_labels)
