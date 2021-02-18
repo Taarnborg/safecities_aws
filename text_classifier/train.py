@@ -65,13 +65,22 @@ def _get_eval_data_loader(batch_size, data_dir):
     train_dataloader = DataLoader(train_data, batch_size=batch_size, sampler=train_sampler, num_workers = args.num_cpus, pin_memory=True)
     return(train_dataloader)
 
-def save_model(save_directory,output_model_file):
+def save_model(save_directory,save_directory):
     output_model_file = os.path.join(save_directory, WEIGHTS_NAME)
     if args.num_gpus > 1:
         model_to_save = model_to_save.module
 
     state_dict = model_to_save.state_dict()
     torch.save(state_dict, output_model_file)
+
+
+def save_model(model, model_dir):
+    path = os.path.join(model_dir, 'model.pth')
+    # recommended way from http://pytorch.org/docs/master/notes/serialization.html
+    torch.save(model.state_dict(), path)
+    logger.info(f"Saving model: {path} \n")
+
+
 
 # def get_model(model_checkpoint, num_labels):
 #     model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=num_labels)
