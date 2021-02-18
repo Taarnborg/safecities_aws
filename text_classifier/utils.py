@@ -11,6 +11,6 @@ class BertEncoderFilter(logging.Filter):
 
         msg = record.getMessage()
         if "module_name:module.bert.encoder" in msg:
-            return True
-        else:
             return None
+        else:
+            return True
