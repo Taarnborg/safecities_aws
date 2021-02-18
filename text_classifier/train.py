@@ -27,6 +27,7 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 TRAIN = 'hateful_70.csv'
 VALID = 'hateful_10.csv'
 TRAIN = 'hateful_20.csv'
+WEIGHTS_NAME = "pytorch_model.bin" # this comes from transformers.file_utils
 MAX_LEN = 512
 USE_SAMPLE = True
 SAMPLE_FRAC = .1
@@ -65,7 +66,10 @@ def _get_eval_data_loader(batch_size, data_dir):
     train_dataloader = DataLoader(train_data, batch_size=batch_size, sampler=train_sampler, num_workers = args.num_cpus, pin_memory=True)
     return(train_dataloader)
 
-def save_model(model_to_save,output_model_file):
+def save_model(save_directory,output_model_file):
+
+    os.makedirs(save_directory, exist_ok=True)
+    output_model_file = os.path.join(save_directory, WEIGHTS_NAME)
 
     if args.num_gpus > 1:
         model_to_save = model_to_save.module
@@ -79,7 +83,7 @@ def save_model(model_to_save,output_model_file):
 #     return(model)
 
 def freeze(model, frozen_layers):
-    modules = [model.bert.encoder.layer[:frozen_layers]] 
+    modules = [.encmodel.bertoder.layer[:frozen_layers]] 
     for module in modules:
         for param in module.parameters():
             param.requires_grad = False
