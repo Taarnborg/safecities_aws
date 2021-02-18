@@ -3,36 +3,44 @@ import logging
 import os
 import sys
 import torch
-
 import numpy as np
 import pandas as pd
 import torch.nn as nn
 import torch_optimizer as optim
-
 from transformers import AutoTokenizer,AutoModelForSequenceClassification
 from transformers import TrainingArguments, Trainer
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
-
-from datasets import load_dataset, load_metric
-
+# from datasets import load_dataset, load_metric
 from torch.utils.data import RandomSampler, DataLoader
 
 # Network definition
-from data_prep import MedborgerDataset
+from data_prep import CustomDataset
 from model_def import TestClassifier
+
+# Utils
+from utils import remove_invalid_inputs
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
+TRAIN = 'hateful_70.csv'
+VALID = 'hateful_10.csv'
+TRAIN = 'hateful_20.csv'
 MAX_LEN = 512
+USE_SAMPLE = True
+SAMPLE_FRAC = .1
 PRETRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
 
 tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_MODEL_NAME, use_fast=True)
 
 def _get_train_data_loader(batch_size, data_dir):
-    dataset = pd.read_csv(os.path.join(args.data_dir, 'train.csv'), sep='\t', names = ['targets', 'text'])
-    train_data = MedborgerDataset(
+    dataset = pd.read_csv(os.path.join(args.data_dir, TRAIN), sep='\t', names = ['targets', 'text'])
+    dataset = remove_invalid_inputs(dataset,'text')
+    if USE_SAMPLE:
+        dataset = dataset.sample(frac=SAMPLE_FRAC)
+
+    train_data = CustomDataset(
                     text=dataset.text.to_numpy(),
                     targets=dataset.targets.to_numpy(),
                     tokenizer=tokenizer,
@@ -44,10 +52,10 @@ def _get_train_data_loader(batch_size, data_dir):
     train_dataloader = DataLoader(train_data, batch_size=batch_size, sampler=train_sampler, num_workers = args.num_cpus, pin_memory=True)
     return(train_dataloader)
 
-
 def _get_eval_data_loader(batch_size, data_dir):
-    dataset = pd.read_csv(os.path.join(args.data_dir, 'valid.csv'), sep='\t', names = ['targets', 'text'])
-    train_data = MedborgerDataset(
+    dataset = pd.read_csv(os.path.join(args.data_dir, VALID), sep='\t', names = ['targets', 'text'])
+    dataset = remove_invalid_inputs(dataset,'text')
+    train_data = CustomDataset(
                     text=dataset.text.to_numpy(),
                     targets=dataset.targets.to_numpy(),
                     tokenizer=tokenizer,
@@ -57,10 +65,18 @@ def _get_eval_data_loader(batch_size, data_dir):
     train_dataloader = DataLoader(train_data, batch_size=batch_size, sampler=train_sampler, num_workers = args.num_cpus, pin_memory=True)
     return(train_dataloader)
 
+def save_model(model_to_save,output_model_file):
 
-def get_model(model_checkpoint, num_labels):
-    model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=num_labels)
-    return(model)
+    if args.num_gpus > 1:
+        model_to_save = model_to_save.module
+
+    state_dict = model_to_save.state_dict()
+    torch.save(state_dict, output_model_file)
+
+
+# def get_model(model_checkpoint, num_labels):
+#     model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint, num_labels=num_labels)
+#     return(model)
 
 def freeze(model, frozen_layers):
     modules = [model.bert.encoder.layer[:frozen_layers]] 
@@ -98,7 +114,6 @@ def train(args):
     # Maybe use different loss function
     loss_fn = nn.CrossEntropyLoss().to(device)
 
-
     for epoch in range(1, args.epochs + 1):
         model.train()
 
@@ -120,15 +135,16 @@ def train(args):
                 if step % 100 == 0:
                     print('Batch', step)
 
-    if args.num_gpus > 1:
-        model.module.save_pretrained(args.model_dir)
-    else:
-        model.save_pretrained(args.model_dir)
+
+    save_model(model, args.data_dir))
+
+    # if args.num_gpus > 1:
+    #     model.module.save_pretrained(args.model_dir)
+    # else:
+    #     model.save_pretrained(args.model_dir)
 
     eval_loader = _get_eval_data_loader(args.test_batch_size, args.data_dir)        
     test(model, eval_loader, device)
-
-
 
 def test(model, eval_loader, device):
     model.eval()
@@ -163,9 +179,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Data and model checkpoints directories
-    parser.add_argument(
-        "--model_checkpoint", type=str, default='Maltehb/-l-ctra-danish-electra-small-uncased', help="name of pretrained model from huggingface model hub"
-    )
     parser.add_argument(
         "--num_labels", type=int, default=2, metavar="N", help="Number of labels."
     )

@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 
-class MedborgerDataset(Dataset):
+class CustomDataset(Dataset):
     def __init__(self, text, targets, tokenizer, max_len):
         self.text = text
         self.targets = targets
@@ -27,4 +27,3 @@ class MedborgerDataset(Dataset):
           'attention_mask': encoding['attention_mask'].flatten(),
           'targets': torch.tensor(target, dtype=torch.long)
         }
-

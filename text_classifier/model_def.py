@@ -40,9 +40,11 @@ class TestClassifier(nn.Module):
         super(TestClassifier, self).__init__()
         self.bert = BertModel.from_pretrained(PRETRAINED_MODEL_NAME)
 
-        self.classifier = nn.Sequential(nn.Dropout(p=0.2),
-                                        nn.Linear(self.bert.config.hidden_size, n_classes),
-                                        nn.ReLU())
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=0.2),
+            nn.Linear(self.bert.config.hidden_size, 300),
+            nn.Linear(300, n_classes),
+            )
         
     def forward(self, input_ids, attention_mask):
         output = self.bert(
