@@ -1,4 +1,4 @@
-from transformers import BertModel, BertTokenizer, AdamW, get_linear_schedule_with_warmup,SequenceClassifierOutput
+from transformers import BertModel, BertTokenizer, AdamW, get_linear_schedule_with_warmup
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
