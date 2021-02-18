@@ -136,7 +136,7 @@ def train(args):
                     print('Batch', step)
 
 
-    save_model(model, args.data_dir))
+    save_model(model, args.data_dir)
 
     # if args.num_gpus > 1:
     #     model.module.save_pretrained(args.model_dir)
