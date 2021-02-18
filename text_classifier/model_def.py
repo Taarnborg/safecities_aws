@@ -58,8 +58,8 @@ class TestClassifier(nn.Module):
         )
         
         logits = self.classifier(outputs.pooler_output)
-        output = (logits,) + outputs[2:]
-        return output
+        # output = (logits,) + outputs[2:]
+        return logits
 
 
 class CNNClassifier(nn.Module):
