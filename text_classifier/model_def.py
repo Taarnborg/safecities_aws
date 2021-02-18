@@ -56,7 +56,11 @@ class TestClassifier(nn.Module):
           input_ids=input_ids,
           attention_mask=attention_mask
         )
-        return self.classifier(output.pooler_output)
+        
+        logits = self.classifier(output.pooler_output)
+        output = (logits,) + outputs[2:]
+        return output
+
 
 class CNNClassifier(nn.Module):
     def __init__(self, n_classes):
