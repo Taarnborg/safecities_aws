@@ -103,7 +103,7 @@ class CNNClassifier(nn.Module):
 
 classifier = nn.Sequential(
     nn.Dropout(p=0.1),
-    nn.Linear(self.bert.config.hidden_size, 32),
+    nn.Linear(768, 32),
     nn.Dropout(p=0.1),
     nn.ReLU(),
     nn.Linear(32, 48),
