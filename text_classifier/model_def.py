@@ -52,11 +52,11 @@ class TestClassifier(nn.Module):
             )
         
     def forward(self, input_ids, attention_mask):
-        sequence_output, pooled_output = self.bert(
+        output = self.bert(
           input_ids=input_ids,
           attention_mask=attention_mask
         )
-        return self.classifier(pooled_output)
+        return self.classifier(output.pooler_output)
 
 class CNNClassifier(nn.Module):
     def __init__(self, n_classes):
@@ -90,10 +90,10 @@ class CNNClassifier(nn.Module):
         logit = self.fc1(x)  # (N, C)
         output = self.sigmoid(logit)
         return output
-       
+
     def forward(self, input_ids, attention_mask):
-        output = self.bert(
+        sequence_output, pooled_output = self.bert(
           input_ids=input_ids,
           attention_mask=attention_mask
         )
-        return self.classifier(output.pooler_output)
+        return self.classifier(pooled_output)
