@@ -9,7 +9,8 @@ class BertEncoderFilter(logging.Filter):
 
     def filter(self, record):
 
-        if "module_name:module.bert.encoder" in record:
+        msg = record.getMessage()
+        if "module_name:module.bert.encoder" in msg:
             return True
         else:
-            return False
+            return None
