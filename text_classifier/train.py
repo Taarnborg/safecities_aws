@@ -21,7 +21,7 @@ from model_def import TestClassifier
 from utils import remove_invalid_inputs
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 TRAIN = 'hateful_70.csv'
@@ -139,7 +139,7 @@ def train(args):
     eval_loader = _get_eval_data_loader(args.test_batch_size, args.data_dir)        
     test(model, eval_loader, device)
 
-    save_model(model, args.data_dir)
+    save_model(model, args.model_dir)
 
     # if args.num_gpus > 1:
     #     model.module.save_pretrained(args.model_dir)
@@ -153,7 +153,6 @@ def test(model, eval_loader, device):
 
     with torch.no_grad():
         for step, batch in enumerate(eval_loader):
-            print(step)
             b_input_ids = batch['input_ids'].to(device)
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)

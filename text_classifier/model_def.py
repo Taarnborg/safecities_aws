@@ -43,7 +43,10 @@ class TestClassifier(nn.Module):
         self.classifier = nn.Sequential(
             nn.Dropout(p=0.2),
             nn.Linear(self.bert.config.hidden_size, 300),
+            nn.ReLU(),
             nn.Linear(300, n_classes),
+            nn.ReLU(),
+            nn.Sigmoid()
             )
         
     def forward(self, input_ids, attention_mask):
