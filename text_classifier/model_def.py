@@ -41,12 +41,14 @@ class TestClassifier(nn.Module):
         self.bert = BertModel.from_pretrained(PRETRAINED_MODEL_NAME)
 
         self.classifier = nn.Sequential(
-            nn.Dropout(p=0.2),
-            nn.Linear(self.bert.config.hidden_size, 384),
+            nn.Dropout(p=0.1),
+            nn.Linear(self.bert.config.hidden_size, 300),
+            nn.Dropout(p=0.1),
             nn.ReLU(),
-            nn.Linear(384, 192),
+            nn.Linear(300, 100),
+            nn.Dropout(p=0.1),
             nn.ReLU(),
-            nn.Linear(192, n_classes),
+            nn.Linear(100, n_classes),
             )
         
     def forward(self, input_ids, attention_mask):

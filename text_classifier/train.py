@@ -18,10 +18,12 @@ from data_prep import CustomDataset
 from model_def import TestClassifier
 
 # Utils
-from utils import remove_invalid_inputs
+from utils import remove_invalid_inputs,BertEncoderFilter
 
+f = BertEncoderFilter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+logger.addFilter(f)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 TRAIN = 'hateful_70.csv'
