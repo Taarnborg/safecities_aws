@@ -42,13 +42,13 @@ class TestClassifier(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Dropout(p=0.1),
-            nn.Linear(self.bert.config.hidden_size, 300),
+            nn.Linear(self.bert.config.hidden_size, 32),
             nn.Dropout(p=0.1),
             nn.ReLU(),
-            nn.Linear(300, 100),
+            nn.Linear(32, 48),
             nn.Dropout(p=0.1),
             nn.ReLU(),
-            nn.Linear(100, n_classes),
+            nn.Linear(48, n_classes),
             )
         
     def forward(self, input_ids, attention_mask):
@@ -56,7 +56,7 @@ class TestClassifier(nn.Module):
           input_ids=input_ids,
           attention_mask=attention_mask
         )
-        return self.classifier(sequence_output)
+        return self.classifier(pooled_output)
 
 class CNNClassifier(nn.Module):
     def __init__(self, n_classes):
