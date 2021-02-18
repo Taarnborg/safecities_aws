@@ -29,7 +29,6 @@ VALID = 'hateful_10.csv'
 TRAIN = 'hateful_20.csv'
 WEIGHTS_NAME = "pytorch_model.bin" # this comes from transformers.file_utils
 MAX_LEN = 512
-USE_SAMPLE = True
 SAMPLE_FRAC = .1
 PRETRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
 
@@ -38,7 +37,7 @@ tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_MODEL_NAME, use_fast=True)
 def _get_train_data_loader(batch_size, data_dir):
     dataset = pd.read_csv(os.path.join(args.data_dir, TRAIN), sep='\t', names = ['targets', 'text'])
     dataset = remove_invalid_inputs(dataset,'text')
-    if USE_SAMPLE:
+    if args.use_sample:
         dataset = dataset.sample(frac=SAMPLE_FRAC)
 
     train_data = CustomDataset(
@@ -83,7 +82,7 @@ def save_model(save_directory,output_model_file):
 #     return(model)
 
 def freeze(model, frozen_layers):
-    modules = [.encmodel.bertoder.layer[:frozen_layers]] 
+    modules = [model.bert.encoder.layer[:frozen_layers]] 
     for module in modules:
         for param in module.parameters():
             param.requires_grad = False
@@ -208,18 +207,14 @@ if __name__ == "__main__":
     #)
 
     # Container environment
-    #parser.add_argument("--hosts", type=list, default=json.loads(os.environ["SM_HOSTS"]))
-    #parser.add_argument("--current-host", type=str, default=os.environ["SM_CURRENT_HOST"])
     parser.add_argument("--model-dir", type=str, default=os.environ["SM_MODEL_DIR"])
     parser.add_argument("--data-dir", type=str, default=os.environ["SM_CHANNEL_DATA"])
-    #parser.add_argument("--data-dir", type=str, default='.')
-
-    #parser.add_argument("--test", type=str, default=os.environ["SM_CHANNEL_TESTING"])
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     parser.add_argument("--num-cpus", type=int, default=os.environ["SM_NUM_CPUS"])
-    
-    #parser.add_argument("--num-gpus", type=int, default=False)
+    # parser.add_argument("--num-gpus", type=int, default=False)
 
+
+    parser.add_argument('--use_sample', dest='use_sample', action='store_true')
 
     args = parser.parse_args()
 
