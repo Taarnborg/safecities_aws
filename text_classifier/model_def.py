@@ -21,7 +21,7 @@ class CNNClassifier(nn.Module):
         self.convs = nn.ModuleList([nn.Conv2d(1, n_kernels, (k_size, max_len)) for k_size in kernel_sizes])
         self.dropout = nn.Dropout(dropout)
         self.fc1 = nn.Linear(len(kernel_sizes) * n_kernels, n_classes)
-        self.softmax = nn.Softmax(1)
+        # self.softmax = nn.Softmax(1)
 
     def classifier(self,bert_embd):
 
@@ -35,8 +35,8 @@ class CNNClassifier(nn.Module):
         # dropout,linear,softmax
         embd = self.dropout(embd)
         logits = self.fc1(embd)
-        probs = self.softmax(logits)
-        return probs
+        # probs = self.softmax(logits) # it looks like crossEntropy do this part itself
+        return logits
 
     # def forward(self, x):
     #     probs = self.classifier(x)

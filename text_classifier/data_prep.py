@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import Dataset
+import numpy as np
 
 class CustomDataset(Dataset):
     def __init__(self, text, targets, tokenizer, max_len):
@@ -10,6 +11,10 @@ class CustomDataset(Dataset):
 
     def __len__(self):
         return len(self.text)
+
+    def __weights__(self):
+        _,counts = np.unique(self.targets, return_counts=True)
+        return torch.tensor([max(counts)/c for c in counts]).float()
 
     def __getitem__(self, item):
         text = self.text[item]

@@ -18,17 +18,14 @@ from data_prep import CustomDataset
 from model_def import CNNClassifier
 
 # Utils
-from utils import remove_invalid_inputs,BertEncoderFilter
+from utils import remove_invalid_inputs
 
-f = BertEncoderFilter()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
-logger.addFilter(f)
 
 TRAIN = 'hateful_70.csv'
-VALID = 'hateful_10.csv'
-TEST = 'hateful_20.csv'
+VALID = 'hateful_20.csv'
 WEIGHTS_NAME = "pytorch_model.bin" # this comes from transformers.file_utils
 MAX_LEN = 512
 
@@ -72,40 +69,37 @@ def save_model(model_to_save,save_directory):
     torch.save(state_dict, output_model_file)
 
 def train(args):
-    use_cuda = args.num_gpus > 0
-    device = torch.device("cuda:0" if use_cuda else "cpu")
-    
-    print(device)
-
+    # loading the train_loader and the model
     train_loader,train_data = _get_train_data_loader(args.batch_size, args.data_dir)
     model = CNNClassifier(args.model_checkpoint,args.num_labels,MAX_LEN)
-    
-    torch.manual_seed(args.seed)
-    if use_cuda:
-        torch.cuda.manual_seed(args.seed)
 
+    # setting up cuda 
+    use_cuda = args.num_gpus > 0
+    if use_cuda:
+        device='cuda:0'
+        torch.cuda.manual_seed(args.seed)
         if args.num_gpus > 1:
             model = torch.nn.DataParallel(model)
-            print('data parallel model')
-
         model.cuda()
+    else:
+        device='cpu'
+        torch.manual_seed(args.seed)
 
-    # Maybe use different optimizer????
-    # optimizer = torch.optim.SGD(
-    #         model.parameters(), 
-    #         lr = args.lr, 
-    #         weight_decay=args.weight_decay)
-
+    # Setting the optimizer (Important that this is done after, and not before, moving the model to cuda)
     optimizer = torch.optim.AdamW(
             model.parameters(), 
             lr = args.lr, 
             eps = args.epsilon,
             weight_decay=args.weight_decay)
+    # optimizer = torch.optim.SGD(
+    #         model.parameters(), 
+    #         lr = args.lr, 
+    #         weight_decay=args.weight_decay)
 
+    # Setting the loss function
+    loss_fn = nn.CrossEntropyLoss(train_data.__weights__()).to(device)
 
-    # Maybe use different loss function
-    loss_fn = nn.CrossEntropyLoss().to(device)
-
+    # Train
     losses = []
     accuracy = []
     for epoch in range(1, args.epochs + 1):
@@ -119,45 +113,36 @@ def train(args):
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)
 
-            outputs = model(b_input_ids,attention_mask=b_input_mask)
+            output = model(b_input_ids,attention_mask=b_input_mask)
+            loss = loss_fn(output, b_labels)
 
-            loss = loss_fn(outputs, b_labels)
-            _, preds = torch.max(outputs, dim=1)
-            acc = torch.eq(preds, b_labels).float().mean() # accuracy (trick to convert boolean)
-
-            optimizer.zero_grad() ## this was set under backward and step, which might explain the very bad results
-
+            # setting the gradients to zero, running a backward
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
+            # getting running loss and running acc
+            _, preds = torch.max(output, dim=1)
+            acc = torch.eq(preds, b_labels).float().mean() # accuracy (trick to convert boolean)
             running_loss += loss.item()
-            # running_acc += acc.item()
+            running_acc += acc.item()
 
             if args.verbose:
                 if step % 100 == 0:
                     print('Batch', step)
 
-
         losses.append(running_loss/train_data.__len__())
         accuracy.append(running_acc/train_data.__len__())
 
+    print(losses)
+    print(accuracy)
+
+    # Test on eval data
     eval_loader = _get_eval_data_loader(args.test_batch_size, args.data_dir)        
     test(model, eval_loader, device)
 
+    # save model
     save_model(model, args.model_dir)
-
-    print(losses)
-    print(accuracy)
-    # plt.plot(losses)
-    # plt.title('Loss vs Epochs')
-    # plt.xlabel('Epochs')
-    # plt.ylabel('loss')
-
-    # plt.plot(accuracy)
-    # plt.title('Accuracy vs Epochs')
-    # plt.xlabel('Epochs')
-    # plt.ylabel('accuracy')
-
 
 def test(model, eval_loader, device):
     model.eval()
@@ -172,7 +157,6 @@ def test(model, eval_loader, device):
 
             outputs = model(b_input_ids,attention_mask=b_input_mask)
             _, preds = torch.max(outputs, dim=1)
-
 
             predicted_classes = torch.cat((predicted_classes, preds))
             labels = torch.cat((labels, b_labels))
