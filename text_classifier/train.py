@@ -15,7 +15,7 @@ from torch.utils.data import RandomSampler, DataLoader
 
 # Network definition
 from data_prep import CustomDataset
-from model_def import classifier
+from model_def import CNNClassifier
 
 # Utils
 from utils import remove_invalid_inputs,BertEncoderFilter
@@ -28,10 +28,11 @@ logger.addFilter(f)
 
 TRAIN = 'hateful_70.csv'
 VALID = 'hateful_10.csv'
-TRAIN = 'hateful_20.csv'
+TEST = 'hateful_20.csv'
 WEIGHTS_NAME = "pytorch_model.bin" # this comes from transformers.file_utils
 MAX_LEN = 512
 PRETRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
+# PRETRAINED_MODEL_NAME = 'prajjwal1/bert-tiny'
 
 tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_MODEL_NAME, use_fast=True)
 
@@ -72,13 +73,6 @@ def save_model(model_to_save,save_directory):
     state_dict = model_to_save.state_dict()
     torch.save(state_dict, output_model_file)
 
-
-def freeze(model, frozen_layers):
-    modules = [model.bert.encoder.layer[:frozen_layers]] 
-    for module in modules:
-        for param in module.parameters():
-            param.requires_grad = False
-
 def train(args):
     use_cuda = args.num_gpus > 0
     device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -86,20 +80,18 @@ def train(args):
     print(device)
 
     train_loader = _get_train_data_loader(args.batch_size, args.data_dir)
-    model = AutoModelForSequenceClassification.from_pretrained(PRETRAINED_MODEL_NAME, num_labels=num_labels)
-    model.classifer = classifier
-    # model = TestClassifier(args.num_labels)
-    freeze(model, args.frozen_layers)
+    model = CNNClassifier(PRETRAINED_MODEL_NAME,args.num_labels,MAX_LEN)
     
     torch.manual_seed(args.seed)
     if use_cuda:
         torch.cuda.manual_seed(args.seed)
 
-    if args.num_gpus > 1:
-        model = torch.nn.DataParallel(model)
-        print('data parallel model')
+        if args.num_gpus > 1:
+            model = torch.nn.DataParallel(model)
+            print('data parallel model')
+
         model.cuda()
-     
+
     # Maybe use different optimizer????
     optimizer = optim.Lamb(
             model.parameters(), 
@@ -138,11 +130,6 @@ def train(args):
 
     save_model(model, args.model_dir)
 
-    # if args.num_gpus > 1:
-    #     model.module.save_pretrained(args.model_dir)
-    # else:
-    #     model.save_pretrained(args.model_dir)
-
 def test(model, eval_loader, device):
     model.eval()
     predicted_classes = torch.empty(0).to(device)
@@ -176,7 +163,7 @@ if __name__ == "__main__":
 
     # Data and model checkpoints directories
     parser.add_argument(
-        "--num_labels", type=int, default=2, metavar="N", help="Number of labels."
+        "--num-labels", type=int, default=2, metavar="N", help="Number of labels."
     )
 
     parser.add_argument(
@@ -192,13 +179,6 @@ if __name__ == "__main__":
     parser.add_argument("--epsilon", type=int, default=1e-8, metavar="EP", help="random seed (default: 1e-8)")
     parser.add_argument("--frozen_layers", type=int, default=10, metavar="NL", help="number of frozen layers(default: 10)")
     parser.add_argument('--verbose', default=True,help='For displaying logs')
-    #parser.add_argument(
-    #    "--log-interval",
-    #    type=int,
-    #    default=10,
-    #    metavar="N",
-    #    help="how many batches to wait before logging training status",
-    #)
 
     # Container environment
     parser.add_argument("--model-dir", type=str, default=os.environ["SM_MODEL_DIR"])
@@ -206,6 +186,7 @@ if __name__ == "__main__":
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     parser.add_argument("--num-cpus", type=int, default=os.environ["SM_NUM_CPUS"])
     # parser.add_argument("--num-gpus", type=int, default=False)
+    # parser.add_argument("--num-cpus", type=int, default=False)
 
     args = parser.parse_args()
     

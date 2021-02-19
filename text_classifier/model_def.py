@@ -2,112 +2,59 @@ from transformers import BertModel, BertTokenizer, AdamW, get_linear_schedule_wi
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch.autograd import Variable
 
-PRETRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
-class KimCNN(nn.Module):
+def freeze(model,n_layers_to_freeze=10):
+
+    modules = [model.embeddings, *model.encoder.layer[:n_layers_to_freeze]] #Replace 5 by what you want
+    for module in modules:
+        for param in module.parameters():
+            param.requires_grad = False
+
+class CNNClassifier(nn.Module):
     
-    def __init__(self, embed_num, embed_dim, class_num, kernel_num, kernel_sizes, dropout, static):
-        super(KimCNN, self).__init__()        
-        V = embed_num
-        D = embed_dim
-        C = class_num
-        Co = kernel_num
-        Ks = kernel_sizes
-        
-        self.static = static
-        self.embed = nn.Embedding(V, D)
-        self.convs1 = nn.ModuleList([nn.Conv2d(1, Co, (K, D)) for K in Ks])
+    def __init__(self,pretrained_model_name,n_classes,max_len=512,freeze_bert=True,bert_layers_to_freeeze=10,n_kernels=3,kernel_sizes=[2,3,4],dropout=0.2):
+        super(CNNClassifier, self).__init__()
+        self.bert = BertModel.from_pretrained(pretrained_model_name)
+        self.freeze_bert = freeze_bert
+        self.bert_layers_to_freeeze = bert_layers_to_freeeze
+
+        self.convs = nn.ModuleList([nn.Conv2d(1, n_kernels, (k_size, max_len)) for k_size in kernel_sizes])
         self.dropout = nn.Dropout(dropout)
-        self.fc1 = nn.Linear(len(Ks) * Co, C)
-        self.sigmoid = nn.Sigmoid()
-        
-    def forward(self, x):
-        if self.static:
-            x = Variable(x)        
-        x = x.unsqueeze(1)  # (N, Ci, W, D)        
-        x = [F.relu(conv(x)).squeeze(3) for conv in self.convs1]  # [(N, Co, W), ...]*len(Ks)        
-        x = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in x]  # [(N, Co), ...]*len(Ks)        
-        x = torch.cat(x, 1)
-        x = self.dropout(x)  # (N, len(Ks)*Co)
-        logit = self.fc1(x)  # (N, C)
-        output = self.sigmoid(logit)
-        return output
+        self.fc1 = nn.Linear(len(kernel_sizes) * n_kernels, n_classes)
+        self.softmax = nn.Softmax(1)
 
+    def classifier(self,bert_embd):
 
-class TestClassifier(nn.Module):
-    def __init__(self, n_classes):
-        super(TestClassifier, self).__init__()
-        self.bert = BertModel.from_pretrained(PRETRAINED_MODEL_NAME)
+        embd = bert_embd.unsqueeze(1)
+        embd = torch.transpose(embd,2,3)
+        # DO CONV
+        embd = [F.relu(conv(embd)).squeeze(3) for conv in self.convs]
+        embd = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in embd]         
+        embd = torch.cat(embd, 1)
 
-        self.classifier = nn.Sequential(
-            nn.Dropout(p=0.1),
-            nn.Linear(self.bert.config.hidden_size, 32),
-            nn.Dropout(p=0.1),
-            nn.ReLU(),
-            nn.Linear(32, 48),
-            nn.Dropout(p=0.1),
-            nn.ReLU(),
-            nn.Linear(48, n_classes),
-            )
-        
+        # dropout,linear,softmax
+        embd = self.dropout(embd)
+        logits = self.fc1(embd)
+        print(logits.shape)
+        probs = self.softmax(logits)
+        return probs
+
+    # def forward(self, x):
+    #     probs = self.classifier(x)
+    #     return probs
+
     def forward(self, input_ids, attention_mask):
         outputs = self.bert(
           input_ids=input_ids,
           attention_mask=attention_mask
         )
-        logits = self.classifier(outputs.pooler_output)
-        return logits
+        if self.freeze_bert:
+            freeze(self.bert,self.bert_layers_to_freeeze)
+        probs = self.classifier(outputs[0]) # takes a tensor of shape [batch_size,max_len,bert_embd_size]
+        return probs
 
-
-
-class CNNClassifier(nn.Module):
-    def __init__(self, n_classes):
-        super(CNNClassifier, self).__init__()
-        self.bert = BertModel.from_pretrained(PRETRAINED_MODEL_NAME)
-
-        STATIC = True
-        MAX_LEN = 512
-        HIDDEN_SIZE = 768
-        N_KERNELS = 3
-        KERENL_SIZES = [2,3,4]
-        DROPOUT = 0.2
-        N_CLASSES = 2
-
-        self.static = STATIC
-        self.embed = nn.Embedding(MAX_LEN, HIDDEN_SIZE)
-        self.convs1 = nn.ModuleList([nn.Conv2d(1, N_KERNELS, (KS, HIDDEN_SIZE)) for KS in KERENL_SIZES])
-        self.dropout = nn.Dropout(DROPOUT)
-        self.fc1 = nn.Linear(len(KERENL_SIZES) * N_KERNELS, N_CLASSES)
-        self.sigmoid = nn.Sigmoid()
-
-    def classifier(self,x):
-
-        if self.static:
-            x = Variable(x)        
-        x = x.unsqueeze(1)  # (N, Ci, W, D)        
-        x = [F.relu(conv(x)).squeeze(3) for conv in self.convs1]  # [(N, Co, W), ...]*len(Ks)        
-        x = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in x]  # [(N, Co), ...]*len(Ks)        
-        x = torch.cat(x, 1)
-        x = self.dropout(x)  # (N, len(Ks)*Co)
-        logit = self.fc1(x)  # (N, C)
-        output = self.sigmoid(logit)
-        return output
-
-    def forward(self, input_ids, attention_mask):
-        sequence_output, pooled_output = self.bert(
-          input_ids=input_ids,
-          attention_mask=attention_mask
-        )
-        return self.classifier(pooled_output)
-
-classifier = nn.Sequential(
-    nn.Dropout(p=0.1),
-    nn.Linear(768, 32),
-    nn.Dropout(p=0.1),
-    nn.ReLU(),
-    nn.Linear(32, 48),
-    nn.Dropout(p=0.1),
-    nn.ReLU(),
-    nn.Linear(48, n_classes),
-    )
+# MAX_LEN = 512
+# a = torch.randn(12,512,128)
+# model = CNNClassifier(PRETRAINED_MODEL_NAME,2,MAX_LEN)  
+# p = model(a)
+# print(p)
