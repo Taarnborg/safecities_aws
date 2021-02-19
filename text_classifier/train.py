@@ -6,7 +6,7 @@ import torch
 import numpy as np
 import pandas as pd
 import torch.nn as nn
-import torch_optimizer as optim
+# import torch_optimizer as optim
 from transformers import AutoTokenizer,AutoModelForSequenceClassification
 from transformers import TrainingArguments, Trainer
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
@@ -26,15 +26,13 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 logger.addFilter(f)
 
-TRAIN = 'hateful_70.csv'
+TRAIN = 'hateful_10.csv'
 VALID = 'hateful_10.csv'
 TEST = 'hateful_20.csv'
 WEIGHTS_NAME = "pytorch_model.bin" # this comes from transformers.file_utils
 MAX_LEN = 512
-PRETRAINED_MODEL_NAME = 'KB/bert-base-swedish-cased'
-# PRETRAINED_MODEL_NAME = 'prajjwal1/bert-tiny'
 
-tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_MODEL_NAME, use_fast=True)
+# tokenizer = AutoTokenizer.from_pretrained(args.model_checkpoint, use_fast=True)
 
 def _get_train_data_loader(batch_size, data_dir):
     dataset = pd.read_csv(os.path.join(args.data_dir, TRAIN), sep='\t', names = ['targets', 'text'])
@@ -50,7 +48,7 @@ def _get_train_data_loader(batch_size, data_dir):
     #Maybe use different sampler???
     train_sampler = RandomSampler(train_data)
     train_dataloader = DataLoader(train_data, batch_size=batch_size, sampler=train_sampler, num_workers = args.num_cpus, pin_memory=True)
-    return(train_dataloader)
+    return train_dataloader,train_data
 
 def _get_eval_data_loader(batch_size, data_dir):
     dataset = pd.read_csv(os.path.join(args.data_dir, VALID), sep='\t', names = ['targets', 'text'])
@@ -79,8 +77,8 @@ def train(args):
     
     print(device)
 
-    train_loader = _get_train_data_loader(args.batch_size, args.data_dir)
-    model = CNNClassifier(PRETRAINED_MODEL_NAME,args.num_labels,MAX_LEN)
+    train_loader,train_data = _get_train_data_loader(args.batch_size, args.data_dir)
+    model = CNNClassifier(args.model_checkpoint,args.num_labels,MAX_LEN)
     
     torch.manual_seed(args.seed)
     if use_cuda:
@@ -93,18 +91,28 @@ def train(args):
         model.cuda()
 
     # Maybe use different optimizer????
-    optimizer = optim.Lamb(
+    # optimizer = torch.optim.SGD(
+    #         model.parameters(), 
+    #         lr = args.lr, 
+    #         weight_decay=args.weight_decay)
+
+    optimizer = torch.optim.AdamW(
             model.parameters(), 
             lr = args.lr, 
-            betas=(0.9, 0.999), 
-            eps=args.epsilon, 
+            eps = args.epsilon,
             weight_decay=args.weight_decay)
+
 
     # Maybe use different loss function
     loss_fn = nn.CrossEntropyLoss().to(device)
 
+    losses = []
+    accuracy = []
     for epoch in range(1, args.epochs + 1):
         model.train()
+
+        running_loss = 0.0
+        running_acc = 0.0
 
         for step, batch in enumerate(train_loader):
             b_input_ids = batch['input_ids'].to(device)
@@ -114,21 +122,42 @@ def train(args):
             outputs = model(b_input_ids,attention_mask=b_input_mask)
 
             loss = loss_fn(outputs, b_labels)
+            _, preds = torch.max(outputs, dim=1)
+            acc = torch.eq(preds, b_labels).float().mean() # accuracy (trick to convert boolean)
+
+            optimizer.zero_grad() ## this was set under backward and step, which might explain the very bad results
 
             loss.backward()
-            #torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0) ?????
             optimizer.step()
-            optimizer.zero_grad()
+
+            running_loss += loss.item()
+            # running_acc += acc.item()
 
             if args.verbose:
                 if step % 100 == 0:
                     print('Batch', step)
 
 
+        losses.append(running_loss/train_data.__len__())
+        accuracy.append(running_acc/train_data.__len__())
+
     eval_loader = _get_eval_data_loader(args.test_batch_size, args.data_dir)        
     test(model, eval_loader, device)
 
     save_model(model, args.model_dir)
+
+    print(losses)
+    print(accuracy)
+    # plt.plot(losses)
+    # plt.title('Loss vs Epochs')
+    # plt.xlabel('Epochs')
+    # plt.ylabel('loss')
+
+    # plt.plot(accuracy)
+    # plt.title('Accuracy vs Epochs')
+    # plt.xlabel('Epochs')
+    # plt.ylabel('accuracy')
+
 
 def test(model, eval_loader, device):
     model.eval()
@@ -163,6 +192,9 @@ if __name__ == "__main__":
 
     # Data and model checkpoints directories
     parser.add_argument(
+        "--model-checkpoint", type=str, default='KB/bert-base-swedish-cased', help="name of pretrained model from huggingface model hub"
+    )
+    parser.add_argument(
         "--num-labels", type=int, default=2, metavar="N", help="Number of labels."
     )
 
@@ -189,5 +221,5 @@ if __name__ == "__main__":
     # parser.add_argument("--num-cpus", type=int, default=False)
 
     args = parser.parse_args()
-    
+    tokenizer = AutoTokenizer.from_pretrained(args.model_checkpoint, use_fast=True)
     train(args)
