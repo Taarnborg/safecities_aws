@@ -26,7 +26,7 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 logger.addFilter(f)
 
-TRAIN = 'hateful_10.csv'
+TRAIN = 'hateful_70.csv'
 VALID = 'hateful_10.csv'
 TEST = 'hateful_20.csv'
 WEIGHTS_NAME = "pytorch_model.bin" # this comes from transformers.file_utils
