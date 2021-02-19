@@ -35,7 +35,6 @@ class CNNClassifier(nn.Module):
         # dropout,linear,softmax
         embd = self.dropout(embd)
         logits = self.fc1(embd)
-        print(logits.shape)
         probs = self.softmax(logits)
         return probs
 
