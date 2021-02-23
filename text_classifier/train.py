@@ -6,11 +6,9 @@ import torch
 import numpy as np
 import pandas as pd
 import torch.nn as nn
-# import torch_optimizer as optim
 from transformers import AutoTokenizer,AutoModelForSequenceClassification
 from transformers import TrainingArguments, Trainer
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
-# from datasets import load_dataset, load_metric
 from torch.utils.data import RandomSampler, DataLoader
 
 # Network definition
@@ -28,8 +26,6 @@ TRAIN = 'hateful_70.csv'
 VALID = 'hateful_20.csv'
 WEIGHTS_NAME = "pytorch_model.bin" # this comes from transformers.file_utils
 MAX_LEN = 512
-
-# tokenizer = AutoTokenizer.from_pretrained(args.model_checkpoint, use_fast=True)
 
 def _get_train_data_loader(batch_size, data_dir):
     dataset = pd.read_csv(os.path.join(args.data_dir, TRAIN), sep='\t', names = ['targets', 'text'])
