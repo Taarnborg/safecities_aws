@@ -1,0 +1,18 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+datasets = "*"
+sentencepiece = "!=0.1.92"
+protobuf = "*"
+transformers = "*"
+torch = "*"
+torch-optimizer = "*"
+scikit-learn = "*"
+
+[requires]
+python_version = "3.8"
