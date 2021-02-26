@@ -141,22 +141,7 @@ def main(args):
         df_train,df_valid = create_dataset(df_zeroes,df_ones,n_train,n_valid,zero_frac)
         df_train.to_csv(os.path.join(args.data_dir,'safecities_large_imbalanced_train.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
         df_valid.to_csv(os.path.join(args.data_dir,'safecities_large_imbalanced_valid.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
-
-
-
-# df_train = pd.read_csv('angreb/train.csv', sep='\t', names = ['targets', 'text'])
-# df_valid = pd.read_csv('angreb/valid.csv', sep='\t', names = ['targets', 'text'])
-# test_word = 'idiot'
-# max_size = 100
-# subset_1 = df_train[(df_train.text.str.contains(test_word))&(df_train.targets == 1)].iloc[0:max_size]
-# subset_0 = df_train[(~df_train.text.str.contains(test_word))&(df_train.targets == 0)].iloc[0:max_size]
-# df_mini_train = pd.concat([subset_1, subset_0])
-# df_mini_train.to_csv('angreb/mini/train.csv', sep='\t', header=False)
-# subset_1 = df_valid[(df_valid.text.str.contains(test_word))&(df_valid.targets == 1)].iloc[0:max_size]
-# subset_0 = df_valid[(~df_valid.text.str.contains(test_word))&(df_valid.targets == 0)].iloc[0:max_size]
-# df_mini_valid = pd.concat([subset_1, subset_0])
-# df_mini_valid.to_csv('angreb/mini/valid.csv', sep='\t', header=False)
-
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--medborger', action='store_false')
