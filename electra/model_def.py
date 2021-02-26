@@ -18,11 +18,13 @@ class ElectraClassifier(nn.Module):
         self.num_labels = num_labels
         self.electra = ElectraModel.from_pretrained(pretrained_model_name)
 
+        self.loss_fn = nn.CrossEntropyLoss()
+
         self.dense = nn.Linear(self.electra.config.hidden_size, self.electra.config.hidden_size)
         self.dropout = nn.Dropout(self.electra.config.hidden_dropout_prob)
         self.out_proj = nn.Linear(self.electra.config.hidden_size, self.num_labels)
 
-    def forward(self, input_ids=None,attention_mask=None,labels=None,device=None):
+    def forward(self, input_ids=None,attention_mask=None,labels=None):
         discriminator_hidden_states = self.electra(input_ids=input_ids,attention_mask=attention_mask)
         sequence_output = discriminator_hidden_states[0]
         x = sequence_output[:, 0, :]
@@ -39,10 +41,6 @@ class ElectraClassifier(nn.Module):
         loss = None
         if labels is not None:
             if self.num_labels > 1:
-                if device:
-                    self.loss_fn = nn.CrossEntropyLoss().to(device)
-                else:
-                    self.loss_fn = nn.CrossEntropyLoss()
                 loss = self.loss_fn(logits.view(-1, self.num_labels), labels.view(-1))
                 # loss = self.loss_fn(logits, labels)
 
