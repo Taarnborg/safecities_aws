@@ -57,19 +57,23 @@ def train(args):
 
             outputs = model(b_input_ids, attention_mask=b_input_mask, labels=b_labels)
             loss = outputs.loss
+            print(loss)
+            print(b_input_ids.shape)
     
-            running_loss += loss.item() * b_input_ids.size(0)
-            _, predicted = torch.max(outputs.logits, 1)
-            correct += (predicted == b_labels).sum().item()
+            if not use_cuda:
+                running_loss += loss.item() * b_input_ids.size(0)
+                _, predicted = torch.max(outputs.logits, 1)
+                correct += (predicted == b_labels).sum().item()
         
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        
-        running_loss = running_loss/train_data.__len__()
-        running_accuracy = 100*(correct/train_data.__len__())
-        print('Running loss', running_loss)
-        print('Running accuracy', running_accuracy)
+
+        if not use_cuda:        
+            running_loss = running_loss/train_data.__len__()
+            running_accuracy = 100*(correct/train_data.__len__())
+            print('Running loss', running_loss)
+            print('Running accuracy', running_accuracy)
 
     # Test on eval data
     eval_path = os.path.join(args.data_dir,args.valid)
