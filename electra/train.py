@@ -55,7 +55,7 @@ def train(args):
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)
 
-            outputs = model(b_input_ids, attention_mask=b_input_mask, labels=b_labels)
+            outputs = model(b_input_ids, attention_mask=b_input_mask, labels=b_labels,device=device)
             loss = outputs.loss
             print(loss)
             print(b_input_ids.shape)
