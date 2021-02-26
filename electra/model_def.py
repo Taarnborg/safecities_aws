@@ -32,13 +32,8 @@ class ElectraClassifier(nn.Module):
         x = self.dropout(x)
         x = F.gelu(self.dense(x))
         x = self.dropout(x)
-        # x = F.gelu(self.dense(x))
-        # x = self.dropout(x)
-        # x = F.gelu(self.dense(x))
-        # x = self.dropout(x)
-        # x = F.gelu(self.dense(x))
-        # x = self.dropout(x)
-        # x = F.gelu(self.dense(x))
+        x = F.gelu(self.dense(x))
+        x = self.dropout(x)
         logits = self.out_proj(x)
 
         loss = None
