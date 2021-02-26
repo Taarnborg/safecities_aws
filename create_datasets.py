@@ -1,7 +1,7 @@
 import argparse
 import os
 import pandas as pd
-
+import csv
 
 def create_dataset(df_zeroes,df_ones,n_train,n_valid,zero_frac=.5):
     one_frac = 1-zero_frac
@@ -100,47 +100,47 @@ def main(args):
         n_train = 64
         n_valid = 32
         df_train,df_valid = create_dataset(df_zeroes,df_ones,n_train,n_valid)
-        df_train.to_csv(os.path.join(args.data_dir,'safecities_mini_balanced_train.csv'), sep='\t', header=False)
-        df_valid.to_csv(os.path.join(args.data_dir,'safecities_mini_balanced_valid.csv'), sep='\t', header=False)
+        df_train.to_csv(os.path.join(args.data_dir,'safecities_mini_balanced_train.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
+        df_valid.to_csv(os.path.join(args.data_dir,'safecities_mini_balanced_valid.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
         # Create balanced train/valid set with 128/64 examples
         n_train = 128
         n_valid = 64
         df_train,df_valid = create_dataset(df_zeroes,df_ones,n_train,n_valid)
-        df_train.to_csv(os.path.join(args.data_dir,'safecities_small_balanced_train.csv'), sep='\t', header=False)
-        df_valid.to_csv(os.path.join(args.data_dir,'safecities_small_balanced_valid.csv'), sep='\t', header=False)
+        df_train.to_csv(os.path.join(args.data_dir,'safecities_small_balanced_train.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
+        df_valid.to_csv(os.path.join(args.data_dir,'safecities_small_balanced_valid.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
         # Create balanced train/valid set with 256/64 examples
         n_train = 256
         n_valid = 128
         df_train,df_valid = create_dataset(df_zeroes,df_ones,n_train,n_valid)
-        df_train.to_csv(os.path.join(args.data_dir,'safecities_medium_balanced_train.csv'), sep='\t', header=False)
-        df_valid.to_csv(os.path.join(args.data_dir,'safecities_medium_balanced_valid.csv'), sep='\t', header=False)
+        df_train.to_csv(os.path.join(args.data_dir,'safecities_medium_balanced_train.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
+        df_valid.to_csv(os.path.join(args.data_dir,'safecities_medium_balanced_valid.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
         # Create balanced train/valid set with 1024/128 examples
         n_train = 1024
         n_valid = 256
         df_train,df_valid = create_dataset(df_zeroes,df_ones,n_train,n_valid)
-        df_train.to_csv(os.path.join(args.data_dir,'safecities_large_balanced_train.csv'), sep='\t', header=False)
-        df_valid.to_csv(os.path.join(args.data_dir,'safecities_large_balanced_valid.csv'), sep='\t', header=False)
+        df_train.to_csv(os.path.join(args.data_dir,'safecities_large_balanced_train.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
+        df_valid.to_csv(os.path.join(args.data_dir,'safecities_large_balanced_valid.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
         # Create imbalanced train/valid set with 128/64 examples
         n_train = 128
         n_valid = 64
         zero_frac = .8
         df_train,df_valid = create_dataset(df_zeroes,df_ones,n_train,n_valid,zero_frac)
-        df_train.to_csv(os.path.join(args.data_dir,'safecities_small_imbalanced_train.csv'), sep='\t', header=False)
-        df_valid.to_csv(os.path.join(args.data_dir,'safecities_small_imbalanced_valid.csv'), sep='\t', header=False)
+        df_train.to_csv(os.path.join(args.data_dir,'safecities_small_imbalanced_train.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
+        df_valid.to_csv(os.path.join(args.data_dir,'safecities_small_imbalanced_valid.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
         # Create imbalanced train/valid set with 128/64 examples
         n_train = 256
         n_valid = 128
         zero_frac = .8
         df_train,df_valid = create_dataset(df_zeroes,df_ones,n_train,n_valid,zero_frac)
-        df_train.to_csv(os.path.join(args.data_dir,'safecities_medium_imbalanced_train.csv'), sep='\t', header=False)
-        df_valid.to_csv(os.path.join(args.data_dir,'safecities_medium_imbalanced_valid.csv'), sep='\t', header=False)
+        df_train.to_csv(os.path.join(args.data_dir,'safecities_medium_imbalanced_train.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
+        df_valid.to_csv(os.path.join(args.data_dir,'safecities_medium_imbalanced_valid.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
         # Create imbalanced train/valid set with 128/64 examples
         n_train = 1024
         n_valid = 256
         zero_frac = .8
         df_train,df_valid = create_dataset(df_zeroes,df_ones,n_train,n_valid,zero_frac)
-        df_train.to_csv(os.path.join(args.data_dir,'safecities_large_imbalanced_train.csv'), sep='\t', header=False)
-        df_valid.to_csv(os.path.join(args.data_dir,'safecities_large_imbalanced_valid.csv'), sep='\t', header=False)
+        df_train.to_csv(os.path.join(args.data_dir,'safecities_large_imbalanced_train.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
+        df_valid.to_csv(os.path.join(args.data_dir,'safecities_large_imbalanced_valid.csv'), sep='\t', header=False,quoting=csv.QUOTE_ALL)
 
 
 
@@ -160,7 +160,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--medborger', action='store_false')
-    parser.add_argument('--safecities', action='store_true')
+    parser.add_argument('--safecities', action='store_false')
     parser.add_argument("--seed", type=int, default=16032311)
     parser.add_argument("--data-dir", type=str, default=os.environ["SM_CHANNEL_DATA"])
 
