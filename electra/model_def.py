@@ -44,9 +44,8 @@ class ElectraClassifier(nn.Module):
     def forward(self, input_ids=None,attention_mask=None):
         discriminator_hidden_states = self.electra(input_ids=input_ids,attention_mask=attention_mask)
         sequence_output = discriminator_hidden_states[0]
-
         logits = self.classifier(sequence_output)
-
+        return logits
         # loss = None
         # if labels is not None:
         #     if self.num_labels > 1:
