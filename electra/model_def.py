@@ -41,7 +41,7 @@ class ElectraClassifier(nn.Module):
         logits = self.out_proj(x)
         return logits
 
-    def forward(self, input_ids=None,attention_mask=None,labels=None):
+    def forward(self, input_ids=None,attention_mask=None):
         discriminator_hidden_states = self.electra(input_ids=input_ids,attention_mask=attention_mask)
         sequence_output = discriminator_hidden_states[0]
 

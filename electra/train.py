@@ -55,7 +55,10 @@ def train(args):
             b_labels = batch['targets'].to(device)
 
             outputs = model(b_input_ids, attention_mask=b_input_mask)
-            loss = loss_fn(outputs.logits.view(-1, args.num_labels), b_labels.view(-1))
+            logits = outputs.logits
+            print(logits)
+            print(logits.shape)
+            loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
             optimizer.zero_grad()
             loss.sum().backward()
             optimizer.step()
