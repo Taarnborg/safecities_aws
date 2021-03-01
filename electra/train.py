@@ -6,17 +6,18 @@ import torch
 from transformers import AutoTokenizer
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 
-# Network definition
 from model_def import ElectraClassifier
-# Utils
-from utils import save_model, get_data_loader
+from utils import save_model
+from data_prep import get_data_loader
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 def train(args):
+
     model = ElectraClassifier(args.model_checkpoint,args.num_labels)
+
     # Setting up cuda 
     use_cuda = args.num_gpus > 0
     if use_cuda:
@@ -32,7 +33,11 @@ def train(args):
     # tokenizer,dataloader and model
     tokenizer = AutoTokenizer.from_pretrained(args.model_checkpoint, use_fast=True)
     train_path = os.path.join(args.data_dir,args.train)
-    train_loader,train_data = get_data_loader(train_path,tokenizer,args.max_len,args.batch_size,args.num_cpus)
+    if use_cuda:
+        num_workers = args.num_gpus * 4
+    else:
+        num_workers = args.num_cpus
+    train_loader,train_data = get_data_loader(train_path,tokenizer,args.max_len,args.batch_size,num_workers)
 
     # Setting the optimizer (Important that this is done after, and not before, moving the model to cuda)
     optimizer = torch.optim.AdamW(
@@ -44,8 +49,8 @@ def train(args):
     loss_fn = torch.nn.CrossEntropyLoss().to(device)
 
     # Train
+    model.train()
     for epoch in range(1, args.epochs + 1):
-        model.train()
         running_loss = 0
         correct = 0
         print('Epoch', epoch)
@@ -55,9 +60,6 @@ def train(args):
             b_labels = batch['targets'].to(device)
 
             logits = model(b_input_ids, attention_mask=b_input_mask)
-            # logits = outputs.logits
-            # print(logits)
-            # print(logits.shape)
             loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
             optimizer.zero_grad()
             loss.sum().backward()
@@ -74,7 +76,7 @@ def train(args):
 
     # Test on eval data
     eval_path = os.path.join(args.data_dir,args.valid)
-    eval_loader,valid_data = get_data_loader(eval_path,tokenizer,args.max_len,args.test_batch_size,args.num_cpus)
+    eval_loader,valid_data = get_data_loader(eval_path,tokenizer,args.max_len,args.test_batch_size,num_workers)
     test(model, eval_loader, device)
 
     ## save model
@@ -92,8 +94,7 @@ def test(model, eval_loader, device):
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)
 
-            outputs = model(b_input_ids,b_input_mask)
-            logits = outputs.logits
+            logits = model(b_input_ids,b_input_mask)
             _,preds = torch.max(logits, dim=1)
 
             predicted_classes = torch.cat((predicted_classes, preds))

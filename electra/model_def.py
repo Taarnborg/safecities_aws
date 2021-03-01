@@ -2,21 +2,6 @@ from transformers import ElectraModel
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from dataclasses import dataclass
-from typing import Optional, Tuple
-
-@dataclass
-class ClassifierOutput:
-    logits: torch.FloatTensor = None
-    hidden_states: Optional[Tuple[torch.FloatTensor]] = None
-    attentions: Optional[Tuple[torch.FloatTensor]] = None
-
-def freeze(model,n_layers_to_freeze=10):
-
-    modules = [model.embeddings, *model.encoder.layer[:n_layers_to_freeze]]
-    for module in modules:
-        for param in module.parameters():
-            param.requires_grad = False
 
 class ElectraClassifier(nn.Module):
     
@@ -46,13 +31,3 @@ class ElectraClassifier(nn.Module):
         sequence_output = discriminator_hidden_states[0]
         logits = self.classifier(sequence_output)
         return logits
-        # loss = None
-        # if labels is not None:
-        #     if self.num_labels > 1:
-        #         loss = self.loss_fn(logits.view(-1, self.num_labels), labels.view(-1))
-
-        return ClassifierOutput(
-            logits=logits,
-            hidden_states=discriminator_hidden_states.hidden_states,
-            attentions=discriminator_hidden_states.attentions,
-        )

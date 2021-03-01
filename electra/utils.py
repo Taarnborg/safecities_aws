@@ -1,14 +1,11 @@
 import os
-import pandas as pd
 import torch
-from torch.utils.data import RandomSampler, DataLoader
-from data_prep import CustomDataset
 
-
-def remove_invalid_inputs(dataset,text_column):
-    'Simpel metode til at fjerne alle rækker fra en dataframe, baseret på om værdierne i en kolonne er af typen str'
-    dataset['valid'] = dataset[text_column].apply(lambda x: isinstance(x, str))
-    return dataset.loc[dataset.valid]
+def freeze(model,n_layers_to_freeze=10):
+    modules = [model.embeddings, *model.encoder.layer[:n_layers_to_freeze]]
+    for module in modules:
+        for param in module.parameters():
+            param.requires_grad = False
 
 def save_model(model_to_save,save_directory,num_gpus=0):
     'Metode til at gemme en pytorch model, der tager højde for om modelen trænes i parallel eller ej'
@@ -19,18 +16,3 @@ def save_model(model_to_save,save_directory,num_gpus=0):
 
     state_dict = model_to_save.state_dict()
     torch.save(state_dict, output_model_file)
-
-def get_data_loader(path,tokenizer,max_len,batch_size,num_cpus):
-    dataset = pd.read_csv(path, sep='\t', names = ['targets', 'text'])
-    dataset = remove_invalid_inputs(dataset,'text')
-
-    data = CustomDataset(
-                    text=dataset.text.to_numpy(),
-                    targets=dataset.targets.to_numpy(),
-                    tokenizer=tokenizer,
-                    max_len=max_len
-                    )
-
-    sampler = RandomSampler(data)
-    dataloader = DataLoader(data, batch_size=batch_size, sampler=sampler, num_workers = num_cpus, pin_memory=True)
-    return dataloader,data
