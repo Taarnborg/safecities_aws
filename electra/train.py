@@ -3,10 +3,8 @@ import logging
 import os
 import sys
 import torch
-import numpy as np
-import torch.nn as nn
-from transformers import AutoTokenizer,AutoModelForSequenceClassification
-from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score,classification_report
+from transformers import AutoTokenizer
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 
 # Network definition
 from model_def import ElectraClassifier
@@ -19,7 +17,6 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 def train(args):
     model = ElectraClassifier(args.model_checkpoint,args.num_labels)
-    # model = AutoModelForSequenceClassification.from_pretrained(args.model_checkpoint)
     # Setting up cuda 
     use_cuda = args.num_gpus > 0
     if use_cuda:
@@ -44,6 +41,8 @@ def train(args):
             eps = args.epsilon,
             weight_decay=args.weight_decay)
 
+    loss_fn = torch.nn.CrossEntropyLoss().to(device)
+
     # Train
     for epoch in range(1, args.epochs + 1):
         model.train()
@@ -55,25 +54,20 @@ def train(args):
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)
 
-            outputs = model(b_input_ids, attention_mask=b_input_mask, labels=b_labels)
-            loss = outputs.loss
-            print(loss)
-            print(b_input_ids.shape)
-    
-            if not use_cuda:
-                running_loss += loss.item() * b_input_ids.size(0)
-                _, predicted = torch.max(outputs.logits, 1)
-                correct += (predicted == b_labels).sum().item()
-        
+            outputs = model(b_input_ids, attention_mask=b_input_mask)
+            loss = loss_fn(outputs.logits.view(-1, args.num_labels), b_labels.view(-1))
             optimizer.zero_grad()
             loss.sum().backward()
             optimizer.step()
 
-        if not use_cuda:        
-            running_loss = running_loss/train_data.__len__()
-            running_accuracy = 100*(correct/train_data.__len__())
-            print('Running loss', running_loss)
-            print('Running accuracy', running_accuracy)
+            running_loss += loss.item() * b_input_ids.size(0)
+            _, predicted = torch.max(outputs.logits, 1)
+            correct += (predicted == b_labels).sum().item()
+
+        running_loss = running_loss/train_data.__len__()
+        running_accuracy = 100*(correct/train_data.__len__())
+        print('Running loss', running_loss)
+        print('Running accuracy', running_accuracy)
 
     # Test on eval data
     eval_path = os.path.join(args.data_dir,args.valid)
@@ -97,7 +91,7 @@ def test(model, eval_loader, device):
 
             outputs = model(b_input_ids,b_input_mask)
             logits = outputs.logits
-            _, preds = torch.max(logits, dim=1)
+            _,preds = torch.max(logits, dim=1)
 
             predicted_classes = torch.cat((predicted_classes, preds))
             labels = torch.cat((labels, b_labels))
@@ -110,7 +104,6 @@ def test(model, eval_loader, device):
     print('F1 score:', f1_score(labels, predicted_classes))
     print('Precision score:', precision_score(labels, predicted_classes))
     print('Recall score:', recall_score(labels, predicted_classes))
-    # print(classification_report(labels, predicted_classes))
 
 
 if __name__ == "__main__":
@@ -136,7 +129,7 @@ if __name__ == "__main__":
     parser.add_argument("--data-dir", type=str, default=os.environ["SM_CHANNEL_DATA"])
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     parser.add_argument("--num-cpus", type=int, default=os.environ["SM_NUM_CPUS"])
-    parser.add_argument("--save-model", type=int, default=0)
+    parser.add_argument("--save-model", type=int, default=1)
 
     ## RUN
     args = parser.parse_args()
