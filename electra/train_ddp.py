@@ -3,6 +3,8 @@ import logging
 import os
 import sys
 import torch
+import torch.multiprocessing as mp
+import torch.distributed as dist
 from transformers import AutoTokenizer
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 
@@ -138,11 +140,7 @@ if __name__ == "__main__":
     ## RUN
     args = parser.parse_args()
 
-    train(args)
-
-    #########################################################
-    args.world_size = args.num_gpus * args.num_nodes        #
-    os.environ['MASTER_ADDR'] = '10.57.23.164'              #
-    os.environ['MASTER_PORT'] = '8888'                      #
-    mp.spawn(train, nprocs=args.num_gpus, args=(args,))     #
-    #########################################################
+    args.world_size = args.num_gpus * args.num_nodes
+    os.environ['MASTER_ADDR'] = '10.57.23.164'
+    os.environ['MASTER_PORT'] = '8888'
+    mp.spawn(train, nprocs=args.num_gpus, args=(args,))
