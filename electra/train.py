@@ -24,7 +24,7 @@ def train(args):
         device='cuda:0'
         torch.cuda.manual_seed(args.seed)
         if args.num_gpus > 1:
-            model = torch.nn.DataParallel(model)
+            model = torch.nn.DistributedDataParallel(model)
         model.cuda()
     else:
         device='cpu'
