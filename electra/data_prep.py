@@ -1,6 +1,7 @@
 import pandas as pd
 import torch
 from torch.utils.data import Dataset,RandomSampler,DataLoader
+import numpy as np
 
 class CustomDataset(Dataset):
     def __init__(self, text, targets, tokenizer, max_len):
@@ -26,7 +27,8 @@ class CustomDataset(Dataset):
           'text': text,
           'input_ids': encoding['input_ids'].flatten(),
           'attention_mask': encoding['attention_mask'].flatten(),
-          'targets': torch.tensor(target, dtype=torch.long)
+          'targets': torch.tensor(target, dtype=torch.long),
+
         }
 
 def get_data_loader(path,tokenizer,max_len,batch_size,num_workers):

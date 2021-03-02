@@ -9,7 +9,6 @@ class ElectraClassifier(nn.Module):
         super(ElectraClassifier, self).__init__()
         self.num_labels = num_labels
         self.electra = ElectraModel.from_pretrained(pretrained_model_name)
-
         self.dense = nn.Linear(self.electra.config.hidden_size, self.electra.config.hidden_size)
         self.dropout = nn.Dropout(self.electra.config.hidden_dropout_prob)
         self.out_proj = nn.Linear(self.electra.config.hidden_size, self.num_labels)

@@ -24,9 +24,7 @@ def train(args):
         device='cuda:0'
         torch.cuda.manual_seed(args.seed)
         if args.num_gpus > 1:
-            # model = torch.nn.parallel.DistributedDataParallel(model)
             model = torch.nn.DataParallel(model)
-
         model.cuda()
     else:
         device='cpu'
@@ -48,6 +46,7 @@ def train(args):
             eps = args.epsilon,
             weight_decay=args.weight_decay)
 
+    # loss_fn = torch.nn.CrossEntropyLoss(weight=torch.tensor([1.,3.])).to(device)
     loss_fn = torch.nn.CrossEntropyLoss().to(device)
 
     # Train
@@ -139,5 +138,4 @@ if __name__ == "__main__":
 
     ## RUN
     args = parser.parse_args()
-
     train(args)
