@@ -74,8 +74,6 @@ class WithContextDataset(Dataset):
 def get_data_loader(path,tokenizer,max_len,batch_size,num_workers):
     # dataset = pd.read_csv(path, sep='\t', names=['targets', 'text'])
     dataset = pd.read_csv(path, sep='\t', names = ['targets', 'text', 'origin', 'main_text', 'secondary_text'])
-
-    print(dataset)
     dataset = remove_invalid_inputs(dataset,'text')
     data = CustomDataset(
                     text=dataset.text.to_numpy(),

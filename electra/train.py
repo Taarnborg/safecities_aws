@@ -151,7 +151,6 @@ if __name__ == "__main__":
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     parser.add_argument("--num-cpus", type=int, default=os.environ["SM_NUM_CPUS"])
     parser.add_argument("--save-model", type=int, default=1)
-    parser.add_argument("--get-preds", type=int, default=1)
 
     ## RUN
     args = parser.parse_args()
