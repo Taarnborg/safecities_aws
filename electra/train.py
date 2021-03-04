@@ -42,11 +42,21 @@ def train(args):
     train_loader,train_data = get_data_loader(train_path,tokenizer,args.max_len,args.batch_size,num_workers)
 
     # Setting the optimizer (Important that this is done after, and not before, moving the model to cuda)
-    optimizer = torch.optim.AdamW(
-            model.parameters(), 
-            lr = args.lr, 
-            eps = args.epsilon,
-            weight_decay=args.weight_decay)
+    # optimizer = torch.optim.AdamW(
+    #         model.parameters(), 
+    #         lr = args.lr, 
+    #         eps = args.epsilon,
+    #         weight_decay=args.weight_decay)
+
+
+    optimizer = torch.optim.SGD(
+        model.parameters(), 
+        lr=args.lr, 
+        momentum=args.momentum,
+        dampening=args.dampening,
+        weight_decay=args.weight_decay
+        )
+
 
     # loss_fn = torch.nn.CrossEntropyLoss(weight=torch.tensor([1.,3.])).to(device)
     loss_fn = torch.nn.CrossEntropyLoss().to(device)
@@ -142,9 +152,13 @@ if __name__ == "__main__":
     parser.add_argument("--test-batch-size", type=int, default=4)
     parser.add_argument("--epochs", type=int, default=2, help="number of epochs to train (default: 2)")
     parser.add_argument("--lr", type=float, default=2e-5)
-    parser.add_argument("--weight_decay", type=float, default=0.01)
+    parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=43)
-    parser.add_argument("--epsilon", type=int, default=1e-8)  
+    parser.add_argument("--epsilon", type=float, default=1e-8)
+    parser.add_argument("--momentum", type=float, default=0.0)  
+    parser.add_argument("--dampening", type=float, default=0.0)  
+
+
     # Container environment
     parser.add_argument("--model-dir", type=str, default=os.environ["SM_MODEL_DIR"])
     parser.add_argument("--data-dir", type=str, default=os.environ["SM_CHANNEL_DATA"])
