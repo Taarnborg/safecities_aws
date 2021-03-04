@@ -146,7 +146,7 @@ if __name__ == "__main__":
     parser.add_argument("--test-batch-size", type=int, default=4)
     parser.add_argument("--epochs", type=int, default=2, help="number of epochs to train (default: 2)")
     parser.add_argument("--lr", type=float, default=2e-5)
-    parser.add_argument("--weight_decay", type=float, default=0.01)
+    parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=43)
     parser.add_argument("--epsilon", type=int, default=1e-8)  
     # Container environment

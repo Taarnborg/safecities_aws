@@ -93,9 +93,10 @@ def get_data_with_context_loader(path,tokenizer,max_len,batch_size,num_workers):
     dataset = remove_invalid_inputs(dataset,'text')
     dataset = remove_invalid_inputs(dataset,'main_text')
 
+    context = dataset.apply(lambda x: create_context_string(x), axis=1)
     data = WithContextDataset(
                     text=dataset.text.to_numpy(),
-                    context=dataset.main_text.to_numpy(),
+                    context=context.to_numpy(),
                     targets=dataset.targets.to_numpy(),
                     tokenizer=tokenizer,
                     max_len=max_len
@@ -109,3 +110,16 @@ def remove_invalid_inputs(dataset,text_column):
     'Simpel metode til at fjerne alle rækker fra en dataframe, baseret på om værdierne i en kolonne er af typen str'
     dataset['valid'] = dataset[text_column].apply(lambda x: isinstance(x, str))
     return dataset.loc[dataset.valid]
+
+def create_context_string(x):
+    out = ''
+    if isinstance(x.origin,str) and len(x.origin) > 0:
+        out += x.origin + ' [SEP] '
+    if isinstance(x.main_text,str) and len(x.main_text) > 0:
+        out += x.main_text + ' [SEP] '
+    if isinstance(x.secondary_text,str) and len(x.secondary_text) > 0:
+        out += x.secondary_text
+    if len(out) > 0:
+        return out
+    else:
+        return None
