@@ -7,10 +7,10 @@ from transformers import AutoTokenizer
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 import numpy as np
 import pandas as pd
-
-from model_def import ElectraClassifier
+from model_def import ElectraWithContextClassifier
 from utils import save_model
-from data_prep import get_data_loader
+from data_prep import get_data_with_context_loader
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -19,7 +19,7 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 def train(args):
 
     torch.manual_seed(args.seed)
-    model = ElectraClassifier(args.model_checkpoint,args.num_labels)
+    model = ElectraWithContextClassifier(args.model_checkpoint,args.num_labels)
 
     # Setting up cuda
     if args.num_gpus > 0:
@@ -39,7 +39,7 @@ def train(args):
     # tokenizer,dataloader and model
     tokenizer = AutoTokenizer.from_pretrained(args.model_checkpoint, use_fast=True)
     train_path = os.path.join(args.data_dir,args.train)
-    train_loader,train_data = get_data_loader(train_path,tokenizer,args.max_len,args.batch_size,num_workers)
+    train_loader,train_data = get_data_with_context_loader(train_path,tokenizer,args.max_len,args.batch_size,num_workers)
 
     # Setting the optimizer (Important that this is done after, and not before, moving the model to cuda)
     optimizer = torch.optim.AdamW(
@@ -60,17 +60,19 @@ def train(args):
         correct = 0
         print('Epoch', epoch)
         for step, batch in enumerate(train_loader):
-            b_input_ids = batch['input_ids'].to(device)
-            b_input_mask = batch['attention_mask'].to(device)
+            text_input_ids = batch['input_ids_text'].to(device)
+            text_input_mask = batch['attention_mask_text'].to(device)
+            context_input_ids = batch['input_ids_context'].to(device)
+            context_input_mask = batch['attention_mask_context'].to(device)
             b_labels = batch['targets'].to(device)
 
-            logits = model(b_input_ids, attention_mask=b_input_mask)
+            logits = model(text_input_ids,text_input_mask,context_input_ids,context_input_mask)
             loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
             optimizer.zero_grad()
             loss.sum().backward()
             optimizer.step()
 
-            running_loss += loss.item() * b_input_ids.size(0)
+            running_loss += loss.item() * text_input_ids.size(0)
             _, predicted = torch.max(logits, 1)
             correct += (predicted == b_labels).sum().item()
 
@@ -85,7 +87,7 @@ def train(args):
 
     # Test on eval data
     eval_path = os.path.join(args.data_dir,args.eval)
-    eval_loader,_ = get_data_loader(eval_path,tokenizer,args.max_len,args.test_batch_size,num_workers)
+    eval_loader,_ = get_data_with_context_loader(eval_path,tokenizer,args.max_len,args.test_batch_size,num_workers)
     predictions,true_labels,texts = test(model, eval_loader,device)
 
     # Export predictions to csv
@@ -105,11 +107,13 @@ def test(model, eval_loader,device):
     with torch.no_grad():
         for step, batch in enumerate(eval_loader):
             texts += batch['text']
-            b_input_ids = batch['input_ids'].to(device)
-            b_input_mask = batch['attention_mask'].to(device)
+            text_input_ids = batch['input_ids_text'].to(device)
+            text_input_mask = batch['attention_mask_text'].to(device)
+            context_input_ids = batch['input_ids_context'].to(device)
+            context_input_mask = batch['attention_mask_context'].to(device)
             b_labels = batch['targets'].to(device)
 
-            logits = model(b_input_ids,b_input_mask)
+            logits = model(text_input_ids,text_input_mask,context_input_ids,context_input_mask)
             _,preds = torch.max(logits, dim=1)
 
             predictions = torch.cat((predictions, preds))
