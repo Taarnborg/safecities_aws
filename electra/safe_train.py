@@ -131,17 +131,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Data and model checkpoints directories
-    parser.add_argument("--model-checkpoint", type=str, default='Maltehb/-l-ctra-danish-electra-small-cased', help="name of pretrained model from huggingface model hub")
+    parser.add_argument("--model-checkpoint", type=str, default='KB/electra-small-swedish-cased-discriminator', help="name of pretrained model from huggingface model hub")
     parser.add_argument("--num-labels", type=int, default=2)
     parser.add_argument("--train", type=str, default='train.csv')
     parser.add_argument("--eval", type=str, default='eval.csv')
     parser.add_argument("--test", type=str, default='test.csv')
     # Hyperparams
     parser.add_argument("--max-len", type=int, default=512)
-    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--test-batch-size", type=int, default=4)
-    parser.add_argument("--epochs", type=int, default=2, help="number of epochs to train (default: 2)")
-    parser.add_argument("--lr", type=float, default=2e-5)
+    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--lr", type=float, default=e-5)
     parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=43)
     parser.add_argument("--epsilon", type=float, default=1e-8)
