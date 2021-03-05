@@ -5,7 +5,7 @@ import csv
 
 from io import StringIO
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from model_def import ElectraClassifier
+from safe_model_def import ElectraClassifier
 
 MAX_LEN = 512  # this is the max length of the sequence
 PRE_TRAINED_MODEL_NAME = "KB/electra-base-swedish-cased-discriminator"
