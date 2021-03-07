@@ -24,7 +24,6 @@ def input_fn(serialized_input_data, request_content_type):
 
     if request_content_type == "application/json":
         data = json.loads(serialized_input_data)     
-        print(data)           
         tokenized_text = tokenizer(data['text'], return_tensors='pt', padding=True, truncation=False, max_length=MAX_LEN)
         tokenized_context = tokenizer(data['context'], return_tensors='pt', padding=True, truncation=False, max_length=MAX_LEN)
         input_ids_text = tokenized_text['input_ids']
